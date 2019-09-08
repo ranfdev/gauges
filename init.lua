@@ -9,30 +9,9 @@ local hp_bar = {
 	visual = "sprite",
 	textures = {"health_20.png"}, -- The texture is changed later in the code
 	visual_size = {x = 1.5, y = 0.09375, z = 1.5}, -- Y value is (1 / 16) * 1.5
-	wielder = nil,
 }
 
-function vector.sqdist(a, b)
-	local dx = a.x - b.x
-	local dy = a.y - b.y
-	local dz = a.z - b.z
-	return dx * dx + dy * dy + dz * dz
-end
-
-function hp_bar:on_hpchange()
-	local wielder = self.wielder and minetest.get_player_by_name(self.wielder)
-
-	if
-		wielder == nil or
-		vector.sqdist(wielder:get_pos(), self.object:get_pos()) > 3
-	then
-		self.object:remove()
-		return
-	end
-
-	local hp = wielder:get_hp()
-	local breath = wielder:get_breath()
-
+function hp_bar:set_hp(hp)
 	self.object:set_properties({
 		textures = {
 			"health_" .. tostring(hp) .. ".png",
@@ -52,7 +31,6 @@ local function add_HP_gauge(name)
 	if ent ~= nil then
 		ent:set_attach(player, "", {x = 0, y = 19, z = 0}, {x = 0, y = 0, z = 0})
 		ent = ent:get_luaentity()
-		ent.wielder = name
     gauge_list[name] = ent
 	end
 end
@@ -65,7 +43,7 @@ then
 		minetest.after(1, add_HP_gauge, player:get_player_name())
 	end)
   minetest.register_on_player_hpchange(function (player)
-    gauge_list[player:get_player_name()]:on_hpchange()
+    gauge_list[player:get_player_name()]:set_hp(player:get_hp())
   end)
   minetest.register_on_leaveplayer(function(player)
     gauge_list[player:get_player_name()].object:remove()
