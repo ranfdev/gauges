@@ -7,7 +7,7 @@ local hp_bar = {
 	physical = false,
 	collisionbox = {x = 0, y = 0, z = 0},
 	visual = "sprite",
-	textures = {"20.png"}, -- The texture is changed later in the code
+	textures = {"health_20.png"}, -- The texture is changed later in the code
 	visual_size = {x = 1.5, y = 0.09375, z = 1.5}, -- Y value is (1 / 16) * 1.5
 	wielder = nil,
 }
@@ -19,7 +19,7 @@ function vector.sqdist(a, b)
 	return dx * dx + dy * dy + dz * dz
 end
 
-function hp_bar:on_step(dtime)
+function hp_bar:on_hpchange()
 	local wielder = self.wielder and minetest.get_player_by_name(self.wielder)
 
 	if
@@ -35,12 +35,14 @@ function hp_bar:on_step(dtime)
 
 	self.object:set_properties({
 		textures = {
-			"health_" .. tostring(hp) .. ".png^breath_" .. tostring(breath) .. ".png",
+			"health_" .. tostring(hp) .. ".png",
 		},
 	})
 end
 
 minetest.register_entity("gauges:hp_bar", hp_bar)
+
+local gauge_list = {}
 
 local function add_HP_gauge(name)
 	local player = minetest.get_player_by_name(name)
@@ -48,9 +50,10 @@ local function add_HP_gauge(name)
 	local ent = minetest.add_entity(pos, "gauges:hp_bar")
 
 	if ent ~= nil then
-		ent:set_attach(player, "", {x = 0, y = 10, z = 0}, {x = 0, y = 0, z = 0})
+		ent:set_attach(player, "", {x = 0, y = 19, z = 0}, {x = 0, y = 0, z = 0})
 		ent = ent:get_luaentity()
-		ent.wielder = player:get_player_name()
+		ent.wielder = name
+    gauge_list[name] = ent
 	end
 end
 
@@ -61,4 +64,10 @@ then
 	minetest.register_on_joinplayer(function(player)
 		minetest.after(1, add_HP_gauge, player:get_player_name())
 	end)
+  minetest.register_on_player_hpchange(function (player)
+    gauge_list[player:get_player_name()]:on_hpchange()
+  end)
+  minetest.register_on_leaveplayer(function(player)
+    gauge_list[player:get_player_name()].object:remove()
+  end)
 end
