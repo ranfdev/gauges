@@ -68,5 +68,5 @@ then
       return
     end
     gauge_list[name]:set_hp(player:get_hp() + hpchange)
-  end)
+  end, false)
 end
